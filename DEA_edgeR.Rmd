@@ -1,0 +1,147 @@
+---
+title: "DEA_EdgeR"
+author: "Remo Bättig & Asterios Arampatzis"
+date: "April 15, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#changing my library
+myPaths <- .libPaths()
+myPaths <- c(myPaths, "C:/RCustom")
+.libPaths(myPaths)
+```
+
+# Loading the necessary libraries
+
+```{r}
+rm(list=ls())
+library(tidyverse)
+library(readr)
+library(edgeR)
+library(limma)
+```
+
+# Loading all the read count files and merging them
+
+```{r}
+
+#Setting the working directory path to the read count text files
+setwd(#directory)
+
+#Getting the full path to all the files
+files <- list.files(#path)
+#all_filenames <- files %>% basename() %>% as.list()
+
+#A function that loads and merges all the files
+mergefiles<-function(files){
+  #Store each filename (in a more compact version) so that we can label the columns accordingly
+  all_filenames <- files %>% basename() %>% as.list()
+  filenames_short<-all_filenames %>% gsub("_readcount_q35_f2.txt", "", .) %>% sub("HKHNCDRXX_", "",.) %>% sub("_S[0-9]", "",.) %>%as.list()
+  
+  anchor<-as.data.frame(read_table(files[1], col_names = F))
+  
+  colnames(anchor)<-c(as.character(filenames_short[1]), "ID")
+  for (i in c(2:length(files))){
+    tmp<-as.data.frame(read_table(files[i], col_names = F))
+    colnames(tmp)<-c(as.character(filenames_short[i]), "ID")
+    anchor<-merge(anchor, tmp, by = "ID", all = TRUE) #full join
+    #colnames(ctrl_merged)<-c("ID","counts_ctrll001","counts_ctrl002")
+    }
+  #anchor[is.na(anchor)] <- 0 #replace all NA with zero
+  anchor
+}
+
+merged<-mergefiles(files)
+
+```
+
+# Creating DGEList object
+
+```{r}
+merged[is.na(merged)] <- 0
+DEA_1_2 <- DGEList(counts=merged[,2:45], genes=merged[,1])
+```
+
+# Extracting group and condition from column headers
+
+```{r}
+headers <- grep("L00", names(merged), value = TRUE)
+test_group <- sub("^\\D*(\\d+).*$", "\\1", headers)
+test_condition <- sub('^[^_]*_(\\d+).*', '\\1', headers)
+test_first
+test_second
+```
+
+# Extracting type of library preparation from column headers
+
+```{r}
+mRNA_riboZ_headers <- grep("mRNA||riboZ", names(merged), value = TRUE)
+mRNA_riboZ_headers <- mRNA_riboZ_headers[mRNA_riboZ_headers!="ID"]
+mRNA_riboZ_headers
+test_library <- gsub("[^mRN || riboZ]", "", mRNA_riboZ_headers)
+test_library
+```
+
+# Filtering & Normalization
+
+```{r}
+keep <- filterByExpr(DEA_1_2)
+DEA_1_2 <- DEA_1_2[keep, , keep.lib.sizes=FALSE]
+DEA_1_2 <- calcNormFactors(DEA_1_2)
+DEA_1_2$samples
+```
+
+# Data exploration
+
+```{r}
+#plotMDS(DEA_1_2)
+```
+
+## Design matrix creation
+
+```{r}
+Group <- factor(test_group)
+Condition <- factor(test_condition)
+Library <- factor(test_library)
+
+data.frame(Sample=colnames(DEA_1_2), Group, Condition, Library)
+design_1 <- model.matrix(~Group + Condition + Library)
+design_2 <- model.matrix(~Library + Library:Condition)
+rownames(design_1) <- colnames(DEA_1_2)
+rownames(design_2) <- colnames(DEA_1_2)
+design_1
+design_2
+```
+
+## Dispresion estimation
+
+```{r}
+DEA_1_2_design_1 <- estimateDisp(DEA_1_2, design_1, robust=TRUE)
+DEA_1_2_design_2 <- estimateDisp(DEA_1_2, design_2, robust=TRUE)
+DEA_1_2_design_1$common.dispersion
+DEA_1_2_design_2$common.dispersion
+plotBCV_design_1 <- plotBCV(DEA_1_2_design_1)
+plotBCV_design_2 <- plotBCV(DEA_1_2_design_2)
+```
+
+
+## Differential expression analysis
+
+```{r}
+fit_1 <- glmFit(DEA_1_2_design_1, design_1)
+fit_2 <- glmFit(DEA_1_2_design_2, design_2)
+```
+
+```{r}
+lrt_1 <- glmLRT(fit_1)
+lrt_2 <- glmLRT(fit_2)
+topTags(lrt_1)
+topTags(lrt_2)
+summary(decideTests(lrt_1))
+summary(decideTests(lrt_2))
+plotMD(lrt_1)
+plotMD(lrt_2)
+```
