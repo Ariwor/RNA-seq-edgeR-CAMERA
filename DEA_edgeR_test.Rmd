@@ -29,7 +29,7 @@ library(limma)
 ```{r}
 
 #Setting the working directory path to the read count text files
-setwd(#directory)
+setwd(#path)
 
 #Getting the full path to all the files
 files <- list.files(#path)
