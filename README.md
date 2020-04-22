@@ -24,7 +24,7 @@ The resulting BAM files of the Bowtie2 transcriptome alignment were filtered wit
 * `calcNormFactors` was used to account for compositional differences between the libraries.
 * Dispersion was estimated with `estimateDisp`.
 * The [org.Hs.eg.db package](https://bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html) was used to obtain the corresponding gene-EntrezID’s.
-* Three design matrices were defined according to experimental design, specifically (i) Design 1: Condition, (ii) Design 2: Condition + Library (_additive_ effect), (iii) Design 3: Condition + Condition:Library (_nested_ interaction). For the scope of this report, only Design 1 is employed in most of the downstream analysis.
+* Three design matrices were defined according to experimental design, specifically (i) Design 1: Condition, (ii) Design 2: Condition + Library (_additive_ effect), (iii) Design 3: Condition + Condition:Library (_nested_ interaction). As of now in the code, design 1 is employed in most of the downstream analysis.
 * `glmFit` and `glmLRT` were used to fit a model and conduct likelihood ratio tests.
 * `topTags` was used to extract a table of the top differentially expressed genes. From this table, all genes
 with a log-fold change (logFC) > 3 and log-counts per million (logCPM) > 1.5 were selected for gene ontology (GO) annotation.
