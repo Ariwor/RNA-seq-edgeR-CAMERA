@@ -8,7 +8,7 @@ A summary of the workflow employed for the data analysis is illustrated below:
 
 ![RNA-seq data analysis workflow](https://github.com/Ariwor/RNA-seq-edgeR-CAMERA/blob/master/Workflow.png)
 
-## Quality control & adapter trimming
+### Quality control & adapter trimming
 
 The quality of the raw reads was assessed with [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/download.html##fastqc), adapters were trimmed using [trimmomatic v0.39](http://www.usadellab.org/cms/?page=trimmomatic) (parameters: PE -phred33, TRAILING: 30, MINLEN: 30).
 
